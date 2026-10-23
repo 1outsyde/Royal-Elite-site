@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       // Royal Elite starts on its Vercel URL; swap in the custom domain once it has one.
-      body: JSON.stringify({ email, redirect_uri: 'https://royal-elite-site.vercel.app' }),
+      body: JSON.stringify({ email, redirect_uri: 'https://royal-elite-site-gamma.vercel.app' }),
     })
   } catch {
     // Anti-enumeration: always 200
