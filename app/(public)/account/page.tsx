@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { VENDOR_CONFIG } from '@/lib/config'
+import { useCropFile } from '@/components/crop/useCropFile'
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const BG          = 'var(--bg)'
@@ -74,15 +75,20 @@ function ProfileSection() {
   const [identitySaving, setIdentitySaving] = useState(false)
   const [identityMsg, setIdentityMsg]       = useState<string | null>(null)
   const [photoUploading, setPhotoUploading] = useState(false)
+  const { crop, cropModal } = useCropFile()
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const picked = e.target.files?.[0]
+    e.target.value = ''
+    if (!picked) return
+    // Round crop first (photo ratios step 4), same as the app and goutsyde.com.
+    const cropped = await crop(picked, 'profile')
+    if (!cropped) return
     setPhotoUploading(true)
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('outsyde_access_token') : null
       const form = new FormData()
-      form.append('file', file)
+      form.append('file', cropped.file)
       form.append('folder', 'profiles')
       const uploadRes = await fetch('/api/user/upload-image', {
         method: 'POST',
@@ -154,6 +160,7 @@ function ProfileSection() {
 
   return (
     <div>
+      {cropModal}
       {/* Section 1 — Photo */}
       <Card>
         <SectionTitle>Profile Photo</SectionTitle>

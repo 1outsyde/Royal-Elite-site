@@ -165,7 +165,7 @@ function LivePlans({ plans }: { plans: Plan[] }) {
               <article key={p.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 {p.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.imageUrl} alt={p.name} style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover' }} />
+                  <img src={p.imageUrl} alt={p.name} style={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover' }} />
                 ) : null}
                 <div style={{ padding: 24 }}>
                   <h3 className="font-display text-white" style={{ fontSize: 26 }}>{p.name}</h3>
