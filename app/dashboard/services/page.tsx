@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { refusalMessage } from '@/lib/planState'
 import { formatDollars } from '@/lib/estimates'
+import { useCropFile } from '@/components/crop/useCropFile'
 
 // Royal Elite's plans (Outsyde vendor services). Plans are request only by default: customers ask for
 // an estimate, nothing is booked or paid online. Each plan can be limited to some service areas.
@@ -65,6 +66,7 @@ export default function PlansPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const { crop, cropModal } = useCropFile()
   const [busy, setBusy] = useState<string | null>(null)
   const [showArchived, setShowArchived] = useState(false)
 
@@ -111,12 +113,15 @@ export default function PlansPage() {
     setFormError(null)
   }
 
-  async function uploadImage(file: File) {
+  async function uploadImage(picked: File) {
+    // Square crop first (photo ratios step 4); cancelling keeps the form as it was.
+    const cropped = await crop(picked, 'service')
+    if (!cropped) return
     setUploading(true)
     setFormError(null)
     try {
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append('file', cropped.file)
       const res = await fetch('/api/admin/services/upload-image', { method: 'POST', headers: authHeaders(), body: fd })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.url) throw new Error(typeof data?.error === 'string' ? data.error : 'Image upload failed.')
@@ -191,6 +196,7 @@ export default function PlansPage() {
 
   return (
     <div style={{ maxWidth: 980 }}>
+      {cropModal}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 34, color: 'var(--text)', marginBottom: 6 }}>Plans</h1>
@@ -303,11 +309,11 @@ export default function PlansPage() {
                 {form.imageUrl ? (
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={form.imageUrl} alt="" style={{ width: 96, height: 64, borderRadius: 6, objectFit: 'cover' }} />
+                    <img src={form.imageUrl} alt="" style={{ width: 64, height: 64, borderRadius: 6, objectFit: 'cover' }} />
                     <button onClick={() => setForm({ ...form, imageUrl: null })} className="btn btn-secondary">Remove</button>
                   </div>
                 ) : (
-                  <input type="file" accept="image/*" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(f) }} style={{ color: 'var(--muted)', fontSize: 13 }} />
+                  <input type="file" accept="image/*" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadImage(f) }} style={{ color: 'var(--muted)', fontSize: 13 }} />
                 )}
                 {uploading && <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>Uploading...</p>}
               </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 import CoverVideo from '@/components/ui/CoverVideo'
 import { COVER_VIDEO_MAX_SECONDS, uploadCoverVideo } from '@/lib/coverMedia'
+import { useCropFile } from '@/components/crop/useCropFile'
 
 export default function SettingsPage() {
   const isMobile = useWindowWidth() < 768
@@ -13,6 +14,7 @@ export default function SettingsPage() {
   const [heroUploading, setHeroUploading] = useState(false)
   const [heroError, setHeroError] = useState<string | null>(null)
   const [heroSuccess, setHeroSuccess] = useState(false)
+  const { crop, cropModal } = useCropFile()
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoUploading, setLogoUploading] = useState(false)
   const [logoError, setLogoError] = useState<string | null>(null)
@@ -34,8 +36,13 @@ export default function SettingsPage() {
 
   // Logo: saved on the Outsyde account, so the same logo shows on this site and in the app.
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const picked = e.target.files?.[0]
+    e.target.value = ''
+    if (!picked) return
+    // Round crop first (photo ratios step 4), same as the app and goutsyde.com.
+    const cropped = await crop(picked, 'logo')
+    if (!cropped) return
+    const file = cropped.file
 
     setLogoError(null)
     setLogoSuccess(false)
@@ -79,16 +86,21 @@ export default function SettingsPage() {
       setLogoError(err instanceof Error ? err.message : 'Upload failed. Try again.')
     } finally {
       setLogoUploading(false)
-      e.target.value = ''
     }
   }
 
   async function handleHeroUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const picked = e.target.files?.[0]
+    e.target.value = ''
+    if (!picked) return
 
     setHeroError(null)
     setHeroSuccess(false)
+
+    // 16:9 crop first (photo ratios step 4), same shape as the cover in the app.
+    const cropped = await crop(picked, 'cover')
+    if (!cropped) return
+    const file = cropped.file
 
     if (file.size > 8 * 1024 * 1024) {
       setHeroError('File too large — maximum 8MB.')
@@ -133,7 +145,6 @@ export default function SettingsPage() {
       setHeroError(err instanceof Error ? err.message : 'Upload failed. Try again.')
     } finally {
       setHeroUploading(false)
-      e.target.value = ''
     }
   }
 
@@ -192,6 +203,7 @@ export default function SettingsPage() {
 
   return (
     <div style={{ maxWidth: 680 }}>
+      {cropModal}
       <h1 style={{
         fontFamily: 'Cormorant Garamond, serif',
         fontSize: 32,
@@ -334,7 +346,7 @@ export default function SettingsPage() {
               style={{
                 width: '100%',
                 maxWidth: 480,
-                height: 220,
+                aspectRatio: '16 / 9',
                 objectFit: 'cover',
                 borderRadius: 8,
                 border: '1.5px solid var(--border)',
