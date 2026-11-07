@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { VENDOR_CONFIG, isAdminEmail } from "@/lib/config"
+import { VENDOR_CONFIG, canManageSite } from "@/lib/config"
 import { useAuth } from "@/lib/auth-context"
 import BrandLogo from "@/components/layout/BrandLogo"
 
@@ -16,7 +16,7 @@ export default function Nav() {
   const [isOpen, setIsOpen] = useState(false)
   const { user, logout, isLoading } = useAuth()
   const authed = !!user
-  const isAdmin = !!user && isAdminEmail(user.email)
+  const isAdmin = canManageSite(user)
 
   return (
     <nav className="sticky top-0 z-50 bg-base border-b border-line backdrop-blur-sm">

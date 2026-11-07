@@ -90,8 +90,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('outsyde_access_token', data.accessToken)
       document.cookie = `outsyde_access_token=${data.accessToken}; path=/; SameSite=Lax; max-age=604800; Secure`
     }
-    setUser(data.user)
-    return data.user
+    // The login response has no businessId; /api/auth/me does, and the dashboard is opened by owning this
+    // business. Fall back to the login user if /me fails.
+    let full: User = data.user
+    if (data.accessToken) {
+      try {
+        const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${data.accessToken}` }, cache: 'no-store' })
+        if (res.ok) {
+          const me = await res.json()
+          if (me?.user?.id) full = me.user
+        }
+      } catch {
+        // keep the login user
+      }
+    }
+    setUser(full)
+    return full
   }
 
   const register = async (formData: { email: string; password: string; firstName: string; lastName: string }) => {

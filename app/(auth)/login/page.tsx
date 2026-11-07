@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import BrandLogo from '@/components/layout/BrandLogo'
 import { useAuth } from '@/lib/auth-context'
-import { isAdminEmail } from '@/lib/config'
+import { canManageSite } from '@/lib/config'
 import PasswordInput from '@/components/ui/PasswordInput'
 
 export default function LoginPage() {
@@ -33,7 +33,7 @@ function LoginForm() {
     setLoading(true)
     try {
       const loggedInUser = await login(email, password)
-      if (isAdminEmail(loggedInUser.email) || loggedInUser.role === 'vendor' || loggedInUser.role === 'admin') {
+      if (canManageSite(loggedInUser)) {
         router.push('/dashboard')
       } else {
         router.push(redirect)

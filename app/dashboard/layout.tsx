@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import BrandIcon from '@/components/layout/BrandIcon'
 import { useAuth } from '@/lib/auth-context'
-import { isAdminEmail, VENDOR_CONFIG } from '@/lib/config'
+import { canManageSite, VENDOR_CONFIG } from '@/lib/config'
 
 type NavItem = {
   href: string
@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    if (!isLoading && (!user || !isAdminEmail(user.email))) {
+    if (!isLoading && !canManageSite(user)) {
       router.replace('/login')
     }
   }, [user, isLoading, router])
@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     )
   }
 
-  if (isLoading || !user || !isAdminEmail(user.email)) return null
+  if (isLoading || !canManageSite(user)) return null
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
