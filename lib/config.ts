@@ -6,7 +6,7 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!
 // no online booking, payments, products, add-ons or points until deposits are built (Legend 2026-10-22).
 export const VENDOR_CONFIG = {
   vendorName: "Royal Elite Moving",
-  contactEmail: "bprovisionproperties@yahoo.com",
+  contactEmail: "Info.RoyalEliteMoving@gmail.com",
   phone: "757-944-4925",
   phoneHref: "tel:+17579444925",
   hasBookings: false,
