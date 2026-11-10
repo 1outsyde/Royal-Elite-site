@@ -1,7 +1,12 @@
+"use client"
+
 import Link from "next/link"
 import { VENDOR_CONFIG } from "@/lib/config"
+import { phoneHref } from "@/lib/siteContent"
+import { useSiteContent } from "@/lib/useSiteContent"
 
 export default function Footer() {
+  const c = useSiteContent()
   const year = new Date().getFullYear()
 
   return (
@@ -13,7 +18,7 @@ export default function Footer() {
               Royal <span className="text-accent">Elite</span> Moving
             </p>
             <p className="text-body-sm text-muted leading-relaxed">
-              Residential and commercial moving across Hampton Roads and the Eastern Shore. Your move, our priority.
+              Residential and commercial moving across {c.region}. {c.tagline}
             </p>
             <Link href="/#estimate" className="btn btn-primary self-start">
               Get a free estimate
@@ -30,7 +35,7 @@ export default function Footer() {
 
           <div className="flex flex-col gap-4">
             <p className="eyebrow">Contact</p>
-            <a href={VENDOR_CONFIG.phoneHref} className="text-body-sm text-muted hover:text-white transition-colors">{VENDOR_CONFIG.phone}</a>
+            <a href={phoneHref(c.phone)} className="text-body-sm text-muted hover:text-white transition-colors">{c.phone}</a>
             <a href={`mailto:${VENDOR_CONFIG.contactEmail}`} className="text-body-sm text-muted hover:text-white transition-colors break-all">{VENDOR_CONFIG.contactEmail}</a>
             <Link href="/account" className="text-body-sm text-muted hover:text-white transition-colors">My account</Link>
           </div>

@@ -3,9 +3,10 @@
 import { useMemo, useState, type CSSProperties, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
-import { VENDOR_CONFIG } from '@/lib/config'
+import { moveTypesFrom, phoneHref } from '@/lib/siteContent'
+import { useSiteContent } from '@/lib/useSiteContent'
 import {
-  FALLBACK_MOVE_TYPES, FLOORS, HOME_SIZES, earliestMoveDate, formatDollars, planOfferedIn, planPriceCents,
+  FLOORS, HOME_SIZES, earliestMoveDate, formatDollars, planOfferedIn, planPriceCents,
   type Plan,
 } from '@/lib/estimates'
 
@@ -26,7 +27,11 @@ export default function EstimateForm({ cities, plans }: Props) {
   const { user, isLoading } = useAuth()
   const [city, setCity] = useState('')
   const [planId, setPlanId] = useState('')
-  const [moveType, setMoveType] = useState(FALLBACK_MOVE_TYPES[0])
+  const c = useSiteContent()
+  const moveTypes = useMemo(() => moveTypesFrom(c), [c])
+  const [moveTypeInput, setMoveType] = useState('')
+  // Until the customer picks one, or when Benny renames a card, the first move type is used.
+  const moveType = moveTypes.includes(moveTypeInput) ? moveTypeInput : moveTypes[0]
   // null = not touched yet, so the signed in account's name and email show (the customer can change them).
   const [nameInput, setName] = useState<string | null>(null)
   const [emailInput, setEmail] = useState<string | null>(null)
@@ -65,7 +70,7 @@ export default function EstimateForm({ cities, plans }: Props) {
           <Link href="/register" className="btn btn-secondary">Create account</Link>
         </div>
         <p className="text-body-sm" style={{ color: 'var(--muted)', marginTop: 24 }}>
-          Prefer to talk? Call <a href={VENDOR_CONFIG.phoneHref} className="link">{VENDOR_CONFIG.phone}</a>.
+          Prefer to talk? Call <a href={phoneHref(c.phone)} className="link">{c.phone}</a>.
         </p>
       </div>
     )
@@ -111,10 +116,10 @@ export default function EstimateForm({ cities, plans }: Props) {
         return
       }
       setStatus('error')
-      setMessage(typeof data?.message === 'string' ? data.message : `Something went wrong. Please try again or call ${VENDOR_CONFIG.phone}.`)
+      setMessage(typeof data?.message === 'string' ? data.message : `Something went wrong. Please try again or call ${c.phone}.`)
     } catch {
       setStatus('error')
-      setMessage(`Something went wrong. Please try again or call ${VENDOR_CONFIG.phone}.`)
+      setMessage(`Something went wrong. Please try again or call ${c.phone}.`)
     }
   }
 
@@ -143,7 +148,7 @@ export default function EstimateForm({ cities, plans }: Props) {
         <div>
           <label style={label} htmlFor="est-type">Move type</label>
           <select id="est-type" value={moveType} onChange={e => setMoveType(e.target.value)} style={field}>
-            {FALLBACK_MOVE_TYPES.map(m => <option key={m} value={m}>{m}</option>)}
+            {moveTypes.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
       )}
