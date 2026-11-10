@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ESTIMATE_STATUSES, STATUS_LABEL, type EstimateStatus } from '@/lib/estimates'
+import RequestRecipients from '@/components/dashboard/RequestRecipients'
 
 interface EstimateRequest {
   id: string
@@ -104,6 +105,8 @@ export default function EstimatesPage() {
       <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>
         Every request from your site, newest first. You also get each one by email. Call the customer back, then move the request along.
       </p>
+
+      <RequestRecipients />
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
         {(['all', ...ESTIMATE_STATUSES] as const).map(t => (
