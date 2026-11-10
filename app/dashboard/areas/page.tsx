@@ -83,7 +83,7 @@ export default function AreasPage() {
     <div style={{ maxWidth: 640 }}>
       <h1 className="font-display" style={{ fontSize: 34, color: 'var(--text)', marginBottom: 6 }}>Service areas</h1>
       <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>
-        The cities you serve. Customers choose one of these first on your estimate form, and only the plans offered there show up. Set which cities each plan covers on the Plans page.
+        The cities you serve. They show in the Service areas list on your home page, and customers choose one of them first on your estimate form.
       </p>
 
       {loading ? (

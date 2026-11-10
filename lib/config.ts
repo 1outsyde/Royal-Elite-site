@@ -2,7 +2,7 @@ export const BUSINESS_ID = process.env.NEXT_PUBLIC_OUTSYDE_BUSINESS_ID!
 export const API_URL = process.env.NEXT_PUBLIC_OUTSYDE_API_URL!
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!
 
-// Royal Elite Moving (business 9ebaa477, owner businessmanbenny). Estimate requests only:
+// Royal Elite Moving (business 93b7f8c3, owner Info.RoyalEliteMoving@gmail.com, Legend 2026-11-10). Estimate requests only:
 // no online booking, payments, products, add-ons or points until deposits are built (Legend 2026-10-22).
 export const VENDOR_CONFIG = {
   vendorName: "Royal Elite Moving",
@@ -11,6 +11,9 @@ export const VENDOR_CONFIG = {
   phoneHref: "tel:+17579444925",
   hasBookings: false,
   hasServices: true,
+  // Plans stay hidden until Royal Elite connects Stripe: adding a plan turns the business's "offers services"
+  // on, and the backend then hides the whole site until payouts are set up (Legend 2026-11-10).
+  hasPlans: false,
   hasProducts: false,
   hasAnalytics: false,
   hasSubscription: true,

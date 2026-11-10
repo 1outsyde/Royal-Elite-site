@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { VENDOR_CONFIG } from '@/lib/config'
 import { STATUS_LABEL, type EstimateStatus } from '@/lib/estimates'
 
 interface Req {
@@ -56,7 +57,9 @@ export default function DashboardOverview() {
         <Stat label="New requests" value={requests ? count('new') : null} highlight />
         <Stat label="Called" value={requests ? count('called') : null} />
         <Stat label="Quoted" value={requests ? count('quoted') : null} />
-        <Stat label="Live plans" value={plans ? livePlans : null} />
+        {VENDOR_CONFIG.hasPlans
+          ? <Stat label="Live plans" value={plans ? livePlans : null} />
+          : <Stat label="Booked" value={requests ? count('booked') : null} />}
       </div>
 
       {error && <p role="alert" style={{ color: '#fca5a5', marginBottom: 16 }}>{error}</p>}
@@ -81,7 +84,13 @@ export default function DashboardOverview() {
         )}
       </div>
 
-      {plans !== null && livePlans === 0 && (
+      {!VENDOR_CONFIG.hasPlans && (
+        <p style={{ marginTop: 20, fontSize: 14, color: 'var(--muted)' }}>
+          Change the words and prices on your site anytime on the <Link href="/dashboard/home" style={{ color: 'var(--accent-hover)' }}>Home page</Link> tab. Saved changes show on your site right away.
+        </p>
+      )}
+
+      {VENDOR_CONFIG.hasPlans && plans !== null && livePlans === 0 && (
         <p style={{ marginTop: 20, fontSize: 14, color: 'var(--muted)' }}>
           You have no live plans yet, so your site shows your standard price list. Add and publish plans on the <Link href="/dashboard/services" style={{ color: 'var(--accent-hover)' }}>Plans</Link> page. Publishing needs an active Outsyde plan and payouts set up.
         </p>
