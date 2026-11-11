@@ -5,23 +5,30 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import BrandIcon from '@/components/layout/BrandIcon'
 import { useAuth } from '@/lib/auth-context'
-import { canManageSite, VENDOR_CONFIG } from '@/lib/config'
+import { canManageSite, siteRole, VENDOR_CONFIG } from '@/lib/config'
 
 type NavItem = {
   href: string
   label: string
   exact?: boolean
   show: boolean
+  // Hidden from team members (backend migration 112, Legend 2026-11-11: Jeremiah is estimate requests + read only).
+  ownerOnly?: boolean
 }
+
+// Pages a team member can work in; every other page shows to them read only.
+const TEAM_WORK_PAGES = ['/dashboard', '/dashboard/estimates']
+
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'OVERVIEW', exact: true, show: true },
   { href: '/dashboard/estimates', label: 'ESTIMATE REQUESTS', show: VENDOR_CONFIG.hasEstimates },
   { href: '/dashboard/home', label: 'HOME PAGE', show: true },
   { href: '/dashboard/form', label: 'REQUEST FORM', show: true },
-  { href: '/dashboard/services', label: 'PLANS', show: VENDOR_CONFIG.hasPlans },
+  { href: '/dashboard/services', label: 'PLANS', show: VENDOR_CONFIG.hasPlans, ownerOnly: true },
   { href: '/dashboard/areas', label: 'SERVICE AREAS', show: VENDOR_CONFIG.hasServices },
-  { href: '/dashboard/subscription', label: 'SUBSCRIPTION', show: VENDOR_CONFIG.hasSubscription },
+  { href: '/dashboard/subscription', label: 'SUBSCRIPTION', show: VENDOR_CONFIG.hasSubscription, ownerOnly: true },
+  { href: '/dashboard/team', label: 'TEAM', show: true, ownerOnly: true },
   { href: '/dashboard/settings', label: 'SETTINGS', show: true },
 ]
 
@@ -31,11 +38,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  const role = siteRole(user)
+  const isTeam = role === 'team'
+  const ownerOnlyHere = NAV_ITEMS.some(i => i.ownerOnly && pathname.startsWith(i.href))
+
   useEffect(() => {
     if (!isLoading && !canManageSite(user)) {
       router.replace('/login')
+    } else if (!isLoading && isTeam && ownerOnlyHere) {
+      router.replace('/dashboard/estimates')
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router, isTeam, ownerOnlyHere])
 
 
   if (isLoading) {
@@ -46,7 +59,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     )
   }
 
-  if (isLoading || !canManageSite(user)) return null
+  if (isLoading || !canManageSite(user) || (isTeam && ownerOnlyHere)) return null
+  const readOnly = isTeam && !TEAM_WORK_PAGES.includes(pathname)
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
@@ -68,7 +82,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {VENDOR_CONFIG.vendorName}
               </div>
               <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2, letterSpacing: '0.1em' }}>
-                ADMIN
+                {isTeam ? 'TEAM' : 'ADMIN'}
               </div>
             </div>
           </Link>
@@ -76,7 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav: text only, all caps, gold left bar when active */}
         <nav className="flex-1 overflow-y-auto py-4">
-          {NAV_ITEMS.filter(i => i.show).map(item => {
+          {NAV_ITEMS.filter(i => i.show && !(isTeam && i.ownerOnly)).map(item => {
             const isExact = item.exact === true
             const active = isExact ? pathname === item.href : pathname.startsWith(item.href)
             return (
@@ -139,7 +153,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         <main className="flex-1 p-6 lg:p-10 overflow-auto">
-          {children}
+          {readOnly ? (
+            <>
+              <p role="note" style={{ maxWidth: 760, marginBottom: 18, padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--surface)', fontSize: 14, color: 'var(--muted)' }}>
+                You can view this page. Only the owner can change it.
+              </p>
+              {/* A disabled fieldset locks every field and button on the page for team members. */}
+              <fieldset disabled style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>{children}</fieldset>
+            </>
+          ) : children}
         </main>
       </div>
     </div>

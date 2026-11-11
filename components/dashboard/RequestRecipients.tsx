@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState, type CSSProperties } from 'react'
+import { useAuth } from '@/lib/auth-context'
+import { siteRole } from '@/lib/config'
 
 // "Who gets requests" on Dashboard > Requests (Legend 2026-11-10): the login email and Outsyde always get
 // each request; Benny adds up to 5 more (Jeremiah handles Royal Elite's calls). The backend cleans the list.
@@ -21,6 +23,9 @@ const input: CSSProperties = {
 }
 
 export default function RequestRecipients() {
+  // Team members (migration 112) see the list but only the owner changes it (backend refuses their save too).
+  const { user } = useAuth()
+  const readOnly = siteRole(user) === 'team'
   const [ownerEmail, setOwnerEmail] = useState<string | null>(null)
   const [outsydeEmail, setOutsydeEmail] = useState<string | null>(null)
   const [emails, setEmails] = useState<string[]>([])
@@ -79,12 +84,13 @@ export default function RequestRecipients() {
     <section style={{ border: '1px solid var(--border)', borderRadius: 8, background: 'var(--surface)', padding: 18, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
         <h2 style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>Who gets requests</h2>
-        <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 6 }}>Every new request is emailed to everyone here.</p>
+        <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 6 }}>Every new request is emailed to everyone here.{readOnly ? ' Only the owner can change this list.' : ''}</p>
       </div>
       <ul style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, color: 'var(--text)' }}>
         {ownerEmail && <li>{ownerEmail} <span style={{ color: 'var(--muted)' }}>(your login, always included)</span></li>}
         {outsydeEmail && <li>{outsydeEmail} <span style={{ color: 'var(--muted)' }}>(Outsyde, always included)</span></li>}
       </ul>
+      <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {emails.map((e, i) => (
           <div key={i} style={{ display: 'flex', gap: 8 }}>
@@ -93,17 +99,18 @@ export default function RequestRecipients() {
             <button type="button" className="btn btn-outline" onClick={() => { setEmails(emails.filter((_, n) => n !== i)); setOk(false) }}>Remove</button>
           </div>
         ))}
-        {emails.length < MAX && (
+        {!readOnly && emails.length < MAX && (
           <button type="button" className="btn btn-outline" style={{ alignSelf: 'flex-start' }} onClick={() => { setEmails([...emails, '']); setOk(false) }}>
             Add an email
           </button>
         )}
       </div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button type="button" className="btn btn-primary" disabled={saving || !dirty} onClick={save}>{saving ? 'Saving...' : 'Save'}</button>
+        {!readOnly && <button type="button" className="btn btn-primary" disabled={saving || !dirty} onClick={save}>{saving ? 'Saving...' : 'Save'}</button>}
         {error && <span role="alert" style={{ color: '#fca5a5', fontSize: 14 }}>{error}</span>}
         {ok && <span style={{ color: 'var(--muted)', fontSize: 14 }}>Saved.</span>}
       </div>
+      </fieldset>
     </section>
   )
 }

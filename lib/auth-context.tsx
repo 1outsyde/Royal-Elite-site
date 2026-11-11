@@ -11,6 +11,8 @@ export interface User {
   loyaltyPoints: number
   profileImageUrl?: string | null
   businessId?: string | null
+  // Businesses this user helps run (backend migration 112, /api/auth/me): decides team access to the dashboard.
+  team?: { businessId: string; role: string }[]
   username?: string | null
   // Display name (users.name). /api/auth/me returns these since backend 2026-10-18.
   name?: string | null

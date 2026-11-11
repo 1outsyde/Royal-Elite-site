@@ -2,6 +2,8 @@
 
 import { useEffect, useState, type CSSProperties } from 'react'
 import { LIMITS, QUESTION_TYPES, TYPE_LABEL, blankQuestion, cleanForSave, type FormQuestion, type QuestionType } from '@/lib/requestForm'
+import { useAuth } from '@/lib/auth-context'
+import { siteRole } from '@/lib/config'
 
 // Dashboard > Request form (step 6, Legend 2026-11-10): the extra questions on Royal Elite's estimate form.
 // Saved as his Outsyde base form; the move details (type, home size, addresses, date) are always asked.
@@ -35,7 +37,19 @@ export default function RequestFormPage() {
     setSaved(JSON.stringify(cleanForSave(qs)))
   }
 
+  // Team members (migration 112) can't read the owner's form routes; they see the public questions, read only.
+  const { user } = useAuth()
+  const isTeam = siteRole(user) === 'team'
+
   useEffect(() => {
+    if (isTeam) {
+      fetch('/api/bookings/request-form', { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : { questions: [] }))
+        .then(d => apply(d?.questions))
+        .catch(() => setError('Could not load the request form.'))
+        .finally(() => setLoading(false))
+      return
+    }
     fetch('/api/admin/request-form', { headers: authHeaders(), cache: 'no-store' })
       .then(async r => {
         const data = await r.json().catch(() => ({}))
@@ -44,7 +58,7 @@ export default function RequestFormPage() {
       })
       .catch(e => setError(e instanceof Error ? e.message : 'Could not load your request form.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [isTeam])
 
   const dirty = JSON.stringify(cleanForSave(questions)) !== saved
 
