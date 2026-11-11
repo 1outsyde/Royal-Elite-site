@@ -1,10 +1,12 @@
 'use client'
 
-import { useMemo, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { moveTypesFrom, phoneHref } from '@/lib/siteContent'
 import { useSiteContent } from '@/lib/useSiteContent'
+import { firstMissing, toAnswers, type AnswerValue, type FormQuestion } from '@/lib/requestForm'
+import RequestQuestions from './RequestQuestions'
 import {
   FLOORS, HOME_SIZES, earliestMoveDate, formatDollars, planOfferedIn, planPriceCents,
   type Plan,
@@ -45,6 +47,17 @@ export default function EstimateForm({ cities, plans }: Props) {
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
   const [message, setMessage] = useState('')
+  // Benny's request form (Dashboard > Request form). Asked when no plan is picked (his plans aren't live yet).
+  const [questions, setQuestions] = useState<FormQuestion[]>([])
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({})
+  useEffect(() => {
+    let alive = true
+    fetch('/api/bookings/request-form', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : { questions: [] }))
+      .then(d => { if (alive) setQuestions(Array.isArray(d?.questions) ? d.questions : []) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
 
   const cityPlans = useMemo(() => (city ? plans.filter(p => planOfferedIn(p, city)) : []), [plans, city])
   const usePlans = plans.length > 0
@@ -93,6 +106,13 @@ export default function EstimateForm({ cities, plans }: Props) {
     setStatus('sending')
     setMessage('')
     const plan = plans.find(p => p.id === chosenPlanId)
+    const formQuestions = plan ? [] : questions
+    const missing = firstMissing(formQuestions, answers)
+    if (missing) {
+      setStatus('error')
+      setMessage(`Please answer: ${missing}`)
+      return
+    }
     const details: Record<string, string> = {
       homeSize, fromAddress, toAddress, floor, stops, notes,
       ...(usePlans ? {} : { moveType }),
@@ -108,6 +128,7 @@ export default function EstimateForm({ cities, plans }: Props) {
           city, name, email, phone,
           preferredDate: moveDate || null,
           details,
+          ...(formQuestions.length ? { answers: toAnswers(formQuestions, answers) } : {}),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -197,6 +218,11 @@ export default function EstimateForm({ cities, plans }: Props) {
         <label style={label} htmlFor="est-notes">Notes or special items</label>
         <textarea id="est-notes" maxLength={2000} rows={4} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Heavy items, stairs, fragile pieces, timing, and anything else we should know." style={{ ...field, resize: 'vertical' }} />
       </div>
+
+      {!chosenPlanId && (
+        <RequestQuestions questions={questions} values={answers} field={field} label={label}
+          onChange={(id, v) => setAnswers(a => ({ ...a, [id]: v }))} />
+      )}
 
       {status === 'error' && (
         <div className="md:col-span-2" role="alert" style={{ padding: '12px 16px', border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)', color: '#fca5a5', fontSize: '0.9rem', borderRadius: 4 }}>

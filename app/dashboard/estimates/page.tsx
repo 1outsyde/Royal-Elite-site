@@ -15,6 +15,8 @@ interface EstimateRequest {
   customerPhone: string
   preferredDate: string | null
   details: Record<string, string>
+  // Request form answers (step 6), in form order; photos are image urls.
+  answers?: { questionId: string; label: string; type: string; value: string | string[] }[]
   vendorNotes: string | null
   createdAt: string
   updatedAt: string
@@ -194,6 +196,20 @@ function RequestCard({ r, open, onToggle, onSaved }: { r: EstimateRequest; open:
             <Info label="Sent">{formatWhen(r.createdAt)}</Info>
             {detailRows.filter(([k]) => k !== 'moveType').map(([k, v]) => (
               <Info key={k} label={DETAIL_LABELS[k] ?? k} wide={k === 'notes' || k === 'fromAddress' || k === 'toAddress'}>{v}</Info>
+            ))}
+            {(r.answers ?? []).map(a => (
+              <Info key={a.questionId} label={a.label} wide={a.type === 'photos' || a.type === 'long_text'}>
+                {a.type === 'photos' && Array.isArray(a.value) ? (
+                  <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {a.value.map(u => (
+                      <a key={u} href={u} target="_blank" rel="noopener noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={u} alt={a.label} style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />
+                      </a>
+                    ))}
+                  </span>
+                ) : Array.isArray(a.value) ? a.value.join(', ') : a.value}
+              </Info>
             ))}
           </div>
 
