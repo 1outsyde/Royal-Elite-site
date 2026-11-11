@@ -31,16 +31,34 @@ export function isAdminEmail(email: string | null | undefined): boolean {
   return ADMIN_EMAILS.includes(email.trim().toLowerCase())
 }
 
+/** Roles the backend gives a business team member (migration 112). "manager" is reserved for later. */
+const TEAM_ROLES = ['requests', 'manager']
+
+type SiteUser = {
+  email?: string | null
+  businessId?: string | null
+  team?: { businessId?: string | null; role?: string | null }[] | null
+}
+
 /**
- * Who sees the site dashboard: the owner of this business (businessId from /api/auth/me) or the Outsyde admin.
- * This only decides what the site shows; every dashboard request is still checked by the backend
- * (owner token, or admin + x-business-id).
+ * Who sees the site dashboard and as what: the Outsyde admin, the owner of this business (businessId from
+ * /api/auth/me), or a team member of it (/api/auth/me `team`, Legend 2026-11-11: Jeremiah, estimate requests
+ * plus read only views). This only decides what the site shows; every dashboard request is still checked by
+ * the backend (owner token, admin + x-business-id, or a team member on the routes that allow it).
  */
-export function canManageSite<U extends { email?: string | null; businessId?: string | null }>(
+export function siteRole(user: SiteUser | null | undefined, businessId: string | null | undefined = BUSINESS_ID): 'admin' | 'owner' | 'team' | null {
+  if (!user) return null
+  if (isAdminEmail(user.email)) return 'admin'
+  if (!businessId) return null
+  if (user.businessId && user.businessId === businessId) return 'owner'
+  const team = Array.isArray(user.team) ? user.team : []
+  if (team.some(t => t && t.businessId === businessId && TEAM_ROLES.includes(String(t.role)))) return 'team'
+  return null
+}
+
+export function canManageSite<U extends SiteUser>(
   user: U | null | undefined,
   businessId: string | null | undefined = BUSINESS_ID,
 ): user is U {
-  if (!user) return false
-  if (isAdminEmail(user.email)) return true
-  return !!businessId && !!user.businessId && user.businessId === businessId
+  return siteRole(user, businessId) !== null
 }
