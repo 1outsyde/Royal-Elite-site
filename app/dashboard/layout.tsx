@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'OVERVIEW', exact: true, show: true },
   { href: '/dashboard/estimates', label: 'ESTIMATE REQUESTS', show: VENDOR_CONFIG.hasEstimates },
   { href: '/dashboard/home', label: 'HOME PAGE', show: true },
+  { href: '/dashboard/form', label: 'REQUEST FORM', show: true },
   { href: '/dashboard/services', label: 'PLANS', show: VENDOR_CONFIG.hasPlans },
   { href: '/dashboard/areas', label: 'SERVICE AREAS', show: VENDOR_CONFIG.hasServices },
   { href: '/dashboard/subscription', label: 'SUBSCRIPTION', show: VENDOR_CONFIG.hasSubscription },

@@ -14,3 +14,6 @@ Never add `DATABASE_URL`, `STRIPE_SECRET_KEY`, `RESEND_API_KEY` or `INTERNAL_API
 
 ## Home page content
 Benny edits the site's words and prices on Dashboard > Home page. They are saved on the business as `siteConfig.content` (see `lib/siteContent.ts`, tests `npx tsx lib/siteContent.test.ts`); any blank field shows the built-in text. Plans stay hidden (`VENDOR_CONFIG.hasPlans`) until Royal Elite connects Stripe, because adding a plan turns on "offers services" and the backend then hides the site until payouts are set up.
+
+## Request form
+Benny builds the extra questions on his estimate form on Dashboard > Request form. They are his Outsyde base form (backend `/api/vendor/request-forms`, `isBase`); customers answer them on the estimate form (`components/sections/RequestQuestions.tsx`, public questions from backend `GET /api/businesses/:id/request-form`) and the backend checks every answer. Photos upload through `/api/request-photo` (folder `requests`), resized in the browser to fit Vercel's upload size. Answers show on Dashboard > Estimate requests and in the request email. Helpers + tests: `lib/requestForm.ts`, `npx tsx lib/requestForm.test.ts`.
